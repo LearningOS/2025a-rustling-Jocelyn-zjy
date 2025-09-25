@@ -1,8 +1,7 @@
 /*
-	single linked list merge
-	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
+    single linked list merge
+    This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -42,6 +41,7 @@ impl<T> LinkedList<T> {
             start: None,
             end: None,
         }
+    }
 
     pub fn add(&mut self, obj: T) {
         let mut node = Box::new(Node::new(obj));
@@ -68,55 +68,45 @@ impl<T> LinkedList<T> {
             },
         }
     }
-    pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self
+    
+    // 实现合并逻辑
+    pub fn merge(list_a: LinkedList<T>, list_b: LinkedList<T>) -> Self
+    where
+        T: Ord + Clone,  // 需要比较大小和克隆值
     {
-        // 创建一个新的空链表作为结果
-        let mut merged_list = LinkedList::<T>::new();
-        
-        // 同时遍历两个链表
-        let mut current_a = list_a.start;
-        let mut current_b = list_b.start;
-        
-        // 比较两个链表的当前节点，将较小的节点添加到结果链表
-        while let (Some(node_a), Some(node_b)) = (current_a, current_b) {
-            let val_a = unsafe { &(*node_a.as_ptr()).val };
-            let val_b = unsafe { &(*node_b.as_ptr()).val };
-            
-            if val_a < val_b {
-                // 将节点从list_a中取出并添加到结果链表
-                current_a = unsafe { (*node_a.as_ptr()).next.take() };
-                merged_list.add_node_to_end(node_a);
+        let mut result = LinkedList::new();
+        let mut a_current = list_a.start;  // 链表A的当前节点指针
+        let mut b_current = list_b.start;  // 链表B的当前节点指针
+
+        // 同时遍历两个链表，比较并添加较小的元素
+        while let (Some(a_ptr), Some(b_ptr)) = (a_current, b_current) {
+            let a_node = unsafe { a_ptr.as_ref() };  // 安全访问A节点
+            let b_node = unsafe { b_ptr.as_ref() };  // 安全访问B节点
+
+            if a_node.val <= b_node.val {
+                result.add(a_node.val.clone());  // 添加A节点的值
+                a_current = a_node.next;  // 移动A指针
             } else {
-                // 将节点从list_b中取出并添加到结果链表
-                current_b = unsafe { (*node_b.as_ptr()).next.take() };
-                merged_list.add_node_to_end(node_b);
+                result.add(b_node.val.clone());  // 添加B节点的值
+                b_current = b_node.next;  // 移动B指针
             }
         }
-        
-        // 处理剩余的节点
-        while let Some(node_a) = current_a {
-            current_a = unsafe { (*node_a.as_ptr()).next.take() };
-            merged_list.add_node_to_end(node_a);
+
+        // 添加链表A的剩余元素
+        while let Some(a_ptr) = a_current {
+            let a_node = unsafe { a_ptr.as_ref() };
+            result.add(a_node.val.clone());
+            a_current = a_node.next;
         }
-        
-        while let Some(node_b) = current_b {
-            current_b = unsafe { (*node_b.as_ptr()).next.take() };
-            merged_list.add_node_to_end(node_b);
+
+        // 添加链表B的剩余元素
+        while let Some(b_ptr) = b_current {
+            let b_node = unsafe { b_ptr.as_ref() };
+            result.add(b_node.val.clone());
+            b_current = b_node.next;
         }
-        
-        merged_list
-    }
-    
-    // 辅助方法：将节点添加到链表末尾
-    fn add_node_to_end(&mut self, node: NonNull<Node<T>>) {
-        match self.end {
-            None => self.start = Some(node),
-            Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = Some(node) },
-        }
-        self.end = Some(node);
-        self.length += 1;
-        // 确保被添加的节点的next指针为None
-        unsafe { (*node.as_ptr()).next = None };
+
+        result  // 返回合并后的链表
     }
 }
 
