@@ -42,7 +42,6 @@ impl<T> LinkedList<T> {
             start: None,
             end: None,
         }
-    }
 
     pub fn add(&mut self, obj: T) {
         let mut node = Box::new(Node::new(obj));
@@ -69,15 +68,56 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+    pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self
+    {
+        // 创建一个新的空链表作为结果
+        let mut merged_list = LinkedList::<T>::new();
+        
+        // 同时遍历两个链表
+        let mut current_a = list_a.start;
+        let mut current_b = list_b.start;
+        
+        // 比较两个链表的当前节点，将较小的节点添加到结果链表
+        while let (Some(node_a), Some(node_b)) = (current_a, current_b) {
+            let val_a = unsafe { &(*node_a.as_ptr()).val };
+            let val_b = unsafe { &(*node_b.as_ptr()).val };
+            
+            if val_a < val_b {
+                // 将节点从list_a中取出并添加到结果链表
+                current_a = unsafe { (*node_a.as_ptr()).next.take() };
+                merged_list.add_node_to_end(node_a);
+            } else {
+                // 将节点从list_b中取出并添加到结果链表
+                current_b = unsafe { (*node_b.as_ptr()).next.take() };
+                merged_list.add_node_to_end(node_b);
+            }
         }
-	}
+        
+        // 处理剩余的节点
+        while let Some(node_a) = current_a {
+            current_a = unsafe { (*node_a.as_ptr()).next.take() };
+            merged_list.add_node_to_end(node_a);
+        }
+        
+        while let Some(node_b) = current_b {
+            current_b = unsafe { (*node_b.as_ptr()).next.take() };
+            merged_list.add_node_to_end(node_b);
+        }
+        
+        merged_list
+    }
+    
+    // 辅助方法：将节点添加到链表末尾
+    fn add_node_to_end(&mut self, node: NonNull<Node<T>>) {
+        match self.end {
+            None => self.start = Some(node),
+            Some(end_ptr) => unsafe { (*end_ptr.as_ptr()).next = Some(node) },
+        }
+        self.end = Some(node);
+        self.length += 1;
+        // 确保被添加的节点的next指针为None
+        unsafe { (*node.as_ptr()).next = None };
+    }
 }
 
 impl<T> Display for LinkedList<T>
