@@ -16,10 +16,11 @@ impl Graph {
             adj: vec![vec![]; n],
         }
     }
-
+    // Add an edge to the graph
     fn add_edge(&mut self, src: usize, dest: usize) {
         self.adj[src].push(dest);
         self.adj[dest].push(src); 
+        println!("{:?}", self.adj);
     }
 
     fn dfs_util(&self, v: usize, visited: &mut HashSet<usize>, visit_order: &mut Vec<usize>) {
